@@ -18,52 +18,41 @@ base_path_double = '/media/wd/irina/Foto'
 # базовый путь, куда перемещать найденные файлы дубли
 base_path_junk = '/media/wd/natali/Фото_junk'
 
-# поддиректории внутри base_path, которые нельзя удалять, основные данные
-good_paths = [
-    'sub_dir1', 'sub_dir2',
-]
 good_extensions = [
     '.JPG', '.AVI', '.jpg', 'jpeg', '.png', '.ORF', '.mp4', '.MOV', '.doc'
 ]
 
-# поддиректории внутри base_path_double, которыe нужно анализировать на дубли
-bad_paths = [
-    '',
-]
+if base_path.find(base_path_double) == 0 or \
+        base_path_double.find(base_path) == 0:
+    raise Exception('Дирректории не должны включать одна другую')
 
 # 1. Заполняем словарь хорошими данными
 good_files = {}
-for good_path in good_paths:
-    path = os.path.join(base_path, good_path)
-    # перебираем все поддиректории рекуррентно
-    for cur_walk in os.walk(path):
-        # перебираем все имена файлов типа JPG
-        for file_name in cur_walk[2]:
-            if not file_name[-4:] in good_extensions:
-                continue
+# перебираем все поддиректории базовой дирректории рекуррентно
+for cur_walk in os.walk(base_path):
+    # перебираем все имена файлов типа JPG
+    for file_name in cur_walk[2]:
+        if not file_name[-4:] in good_extensions:
+            continue
+        file_path = os.path.join(cur_walk[0], file_name)
+        good_files[file_name] = [cur_walk[0], os.path.getsize(file_path)]
+
+# 2. перебираем файлы рекуррентно, кандидаты на дубли
+for cur_walk in os.walk(base_path_double):
+    # перебираем все имена файлов нужных типов good_extensions
+    for file_name in cur_walk[2]:
+        if not file_name[-4:] in good_extensions:
+            continue
+        # если такое имя файла уже имеется среди хороших файлов
+        if file_name in good_files:
             file_path = os.path.join(cur_walk[0], file_name)
-            good_files[file_name] = [cur_walk[0], os.path.getsize(file_path)]
-
-# перебираем файлы, кандидаты на удаление дублей
-for bad_path in bad_paths:
-    path = os.path.join(base_path_double, bad_path)
-    # перебираем все поддиректории рекуррентно
-    for cur_walk in os.walk(path):
-        # перебираем все имена файлов типа JPG
-        for file_name in cur_walk[2]:
-            if not file_name[-4:] in good_extensions:
-                continue
-            # если такое имя файла уже имеется среди хороших файлов
-            if file_name in good_files:
-                file_path = os.path.join(cur_walk[0], file_name)
-                # и размеры файлов совпали
-                if good_files[file_name][1] == os.path.getsize(file_path):
-                    target_dir = os.path.join(
-                        base_path_junk,
-                        os.path.relpath(cur_walk[0], start=base_path_double)
-                    )
-                    pathlib.Path(target_dir).mkdir(parents=True, exist_ok=True)
-                    # то перемещаем файл в мусорную директорию
-                    print(file_path, 'copy in', good_files[file_name][0])
-                    shutil.move(file_path, target_dir)
-
+            # и размеры файлов совпали
+            if good_files[file_name][1] == os.path.getsize(file_path):
+                target_dir = os.path.join(
+                    base_path_junk,
+                    os.path.relpath(cur_walk[0], start=base_path_double)
+                )
+                pathlib.Path(target_dir).mkdir(parents=True, exist_ok=True)
+                # то перемещаем файл в мусорную директорию
+                print(file_path, 'copy in', good_files[file_name][0])
+                shutil.move(file_path, target_dir)
