@@ -18,9 +18,7 @@ base_path_double = '/media/wd/irina/Foto'
 # базовый путь, куда перемещать найденные файлы дубли
 base_path_junk = '/media/wd/natali/Фото_junk'
 
-good_extensions = [
-    '.JPG', '.AVI', '.jpg', 'jpeg', '.png', '.ORF', '.mp4', '.MOV', '.doc'
-]
+bad_extensions = []
 
 if base_path.find(base_path_double) == 0 or \
         base_path_double.find(base_path) == 0:
@@ -32,7 +30,7 @@ good_files = {}
 for cur_walk in os.walk(base_path):
     # перебираем все имена файлов типа JPG
     for file_name in cur_walk[2]:
-        if not file_name[-4:] in good_extensions:
+        if file_name[-4:] in bad_extensions:
             continue
         file_path = os.path.join(cur_walk[0], file_name)
         good_files[file_name] = [cur_walk[0], os.path.getsize(file_path)]
@@ -41,7 +39,7 @@ for cur_walk in os.walk(base_path):
 for cur_walk in os.walk(base_path_double):
     # перебираем все имена файлов нужных типов good_extensions
     for file_name in cur_walk[2]:
-        if not file_name[-4:] in good_extensions:
+        if file_name[-4:] in bad_extensions:
             continue
         # если такое имя файла уже имеется среди хороших файлов
         if file_name in good_files:
